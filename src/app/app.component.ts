@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import * as Rox from 'rox-browser'
+import { FeatureMngService } from './feature-mng.service';
 
 @Component({
   selector: 'app-root',
@@ -8,17 +8,23 @@ import * as Rox from 'rox-browser'
 })
 export class AppComponent {
   title = 'my-app';
-  someFlagValue=Rox.dynamicApi.value('someFlag', 'default')
+  someFlagValue=this.fmService.getValue('someFlag')
+  _fmSubscription
 
-  constructor() {
-    Rox.setup('6357e4c221c6ca36cc89fb54', { configurationFetchedHandler: (res) => {
-      if (res.hasChanges) {
-        this.reloadView()
-      }
-    }})
+  constructor(private fmService: FeatureMngService) {
+    // subscribing to FM new configurations
+    this._fmSubscription = fmService.flagsChanged.subscribe(() => { 
+      this.refreshView()
+    });
   }
 
-  reloadView() {
-    this.someFlagValue=Rox.dynamicApi.value('someFlag', 'default')
+  ngOnDestroy() {
+    //prevent memory leak when component destroyed
+     this._fmSubscription.unsubscribe();
+  }
+
+  refreshView() {
+    // getting flag value from FM service
+    this.someFlagValue=this.fmService.getValue('someFlag')
   }
 }
